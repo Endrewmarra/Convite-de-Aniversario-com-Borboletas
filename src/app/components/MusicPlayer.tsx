@@ -3,55 +3,69 @@ import { Volume2, VolumeX } from 'lucide-react';
 import { motion } from 'motion/react';
 
 export function MusicPlayer() {
-  const [isMuted, setIsMuted] = useState(true);
+  const [isMuted, setIsMuted] = useState(false); // Começa ligado
   const [isLoading, setIsLoading] = useState(false);
-  const [hasAudio, setHasAudio] = useState(true); // Começa como true para permitir tentar
   const audioRef = useRef<HTMLAudioElement>(null);
   const playPromiseRef = useRef<Promise<void> | null>(null);
+  const hasTriedAutoplay = useRef(false);
 
   useEffect(() => {
-    const setupAudio = () => {
-      if (audioRef.current) {
-        audioRef.current.addEventListener('canplay', () => {
-          setHasAudio(true);
-          console.log('✅ Áudio carregado com sucesso');
-        });
+    const audio = audioRef.current;
+    if (!audio || hasTriedAutoplay.current) return;
 
-        audioRef.current.addEventListener('error', (e) => {
-          console.warn('⚠️ Erro ao carregar áudio local, usando fallback externo');
-          // Não desativa o botão, o fallback externo vai funcionar
-          setHasAudio(true);
-        });
-
-        audioRef.current.addEventListener('loadstart', () => {
-          console.log('📦 Iniciando carregamento de áudio...');
-        });
-      }
+    const handleCanPlay = () => {
+      console.log('✅ Áudio carregado com sucesso');
     };
 
-    setupAudio();
+    const handleError = () => {
+      console.warn('⚠️ Erro ao carregar áudio local, tentando fallback externo...');
+    };
 
+    const handleLoadStart = () => {
+      console.log('📦 Iniciando carregamento de áudio...');
+    };
+
+    // Adicionar listeners
+    audio.addEventListener('canplay', handleCanPlay);
+    audio.addEventListener('error', handleError);
+    audio.addEventListener('loadstart', handleLoadStart);
+
+    // Tentar autoplay
     const playAudio = async () => {
-      if (audioRef.current) {
-        audioRef.current.volume = 0.3;
-        try {
-          playPromiseRef.current = audioRef.current.play();
-          await playPromiseRef.current;
+      if (hasTriedAutoplay.current) return;
+      hasTriedAutoplay.current = true;
+
+      try {
+        audio.volume = 0.3;
+        console.log('▶️ Tentando autoplay...');
+        const playPromise = audio.play();
+        
+        if (playPromise !== undefined) {
+          await playPromise;
           setIsMuted(false);
-          console.log('▶️ Autoplay bem-sucedido');
-        } catch (error) {
-          console.log('⚠️ Autoplay bloqueado - clique no botão para iniciar a música');
-          setIsMuted(true);
+          console.log('✅ Autoplay bem-sucedido');
         }
+      } catch (error) {
+        console.log('⚠️ Autoplay bloqueado pelo navegador - clique no botão para iniciar');
+        setIsMuted(true);
       }
     };
 
-    const timer = setTimeout(playAudio, 1500);
-    return () => clearTimeout(timer);
-  }, []);
+    // Esperar um pouco para garantir que o áudio foi carregado
+    const timer = setTimeout(playAudio, 800);
+
+    // Cleanup
+    return () => {
+      clearTimeout(timer);
+      audio.removeEventListener('canplay', handleCanPlay);
+      audio.removeEventListener('error', handleError);
+      audio.removeEventListener('loadstart', handleLoadStart);
+    };
+  }, []); // Dependência vazia - executa uma única vez
 
   const toggleMute = async () => {
-    if (!audioRef.current) {
+    const audio = audioRef.current;
+    if (!audio) {
       console.warn('⚠️ Referência de áudio não disponível');
       return;
     }
@@ -59,7 +73,6 @@ export function MusicPlayer() {
     setIsLoading(true);
 
     try {
-      // Esperar qualquer operação anterior terminar
       if (playPromiseRef.current) {
         await playPromiseRef.current;
       }
@@ -67,16 +80,16 @@ export function MusicPlayer() {
       if (isMuted) {
         // Reproduzir áudio
         console.log('▶️ Reproduzindo áudio...');
-        audioRef.current.volume = 0.3;
-        playPromiseRef.current = audioRef.current.play();
+        audio.volume = 0.3;
+        playPromiseRef.current = audio.play();
         await playPromiseRef.current;
         console.log('✅ Áudio ativado');
         setIsMuted(false);
       } else {
         // Pausar áudio
         console.log('⏸️ Pausando áudio...');
-        audioRef.current.pause();
-        audioRef.current.volume = 0;
+        audio.pause();
+        audio.volume = 0;
         console.log('✅ Áudio desativado');
         setIsMuted(true);
       }
