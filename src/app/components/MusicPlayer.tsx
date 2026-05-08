@@ -1,9 +1,20 @@
-import { useState, useRef, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import { Volume2, VolumeX } from 'lucide-react';
 import { motion } from 'motion/react';
 
-export function MusicPlayer() {
-  const [isMuted, setIsMuted] = useState(false); // Começa ligado
+interface MusicPlayerControls {
+  isPlaying: boolean;
+  isLoading: boolean;
+  togglePlayback: () => Promise<void>;
+}
+
+interface MusicPlayerProps {
+  children?: (controls: MusicPlayerControls) => ReactNode;
+}
+
+export function MusicPlayer({ children }: MusicPlayerProps) {
+  const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
   const playPromiseRef = useRef<Promise<void> | null>(null);
@@ -11,64 +22,50 @@ export function MusicPlayer() {
 
   useEffect(() => {
     const audio = audioRef.current;
+    if (!audio) return;
+
+    const handlePlay = () => setIsPlaying(true);
+    const handlePause = () => setIsPlaying(false);
+    const handleEnded = () => setIsPlaying(false);
+
+    audio.addEventListener('play', handlePlay);
+    audio.addEventListener('pause', handlePause);
+    audio.addEventListener('ended', handleEnded);
+
+    return () => {
+      audio.removeEventListener('play', handlePlay);
+      audio.removeEventListener('pause', handlePause);
+      audio.removeEventListener('ended', handleEnded);
+    };
+  }, []);
+
+  useEffect(() => {
+    const audio = audioRef.current;
     if (!audio || hasTriedAutoplay.current) return;
 
-    const handleCanPlay = () => {
-      console.log('✅ Áudio carregado com sucesso');
-    };
-
-    const handleError = () => {
-      console.warn('⚠️ Erro ao carregar áudio local, tentando fallback externo...');
-    };
-
-    const handleLoadStart = () => {
-      console.log('📦 Iniciando carregamento de áudio...');
-    };
-
-    // Adicionar listeners
-    audio.addEventListener('canplay', handleCanPlay);
-    audio.addEventListener('error', handleError);
-    audio.addEventListener('loadstart', handleLoadStart);
-
-    // Tentar autoplay
     const playAudio = async () => {
       if (hasTriedAutoplay.current) return;
       hasTriedAutoplay.current = true;
 
       try {
         audio.volume = 0.3;
-        console.log('▶️ Tentando autoplay...');
-        const playPromise = audio.play();
-        
-        if (playPromise !== undefined) {
-          await playPromise;
-          setIsMuted(false);
-          console.log('✅ Autoplay bem-sucedido');
-        }
-      } catch (error) {
-        console.log('⚠️ Autoplay bloqueado pelo navegador - clique no botão para iniciar');
-        setIsMuted(true);
+        playPromiseRef.current = audio.play();
+        await playPromiseRef.current;
+        setIsPlaying(true);
+      } catch {
+        setIsPlaying(false);
+      } finally {
+        playPromiseRef.current = null;
       }
     };
 
-    // Esperar um pouco para garantir que o áudio foi carregado
     const timer = setTimeout(playAudio, 800);
+    return () => clearTimeout(timer);
+  }, []);
 
-    // Cleanup
-    return () => {
-      clearTimeout(timer);
-      audio.removeEventListener('canplay', handleCanPlay);
-      audio.removeEventListener('error', handleError);
-      audio.removeEventListener('loadstart', handleLoadStart);
-    };
-  }, []); // Dependência vazia - executa uma única vez
-
-  const toggleMute = async () => {
+  const togglePlayback = async () => {
     const audio = audioRef.current;
-    if (!audio) {
-      console.warn('⚠️ Referência de áudio não disponível');
-      return;
-    }
+    if (!audio) return;
 
     setIsLoading(true);
 
@@ -77,62 +74,57 @@ export function MusicPlayer() {
         await playPromiseRef.current;
       }
 
-      if (isMuted) {
-        // Reproduzir áudio
-        console.log('▶️ Reproduzindo áudio...');
+      if (audio.paused) {
         audio.volume = 0.3;
         playPromiseRef.current = audio.play();
         await playPromiseRef.current;
-        console.log('✅ Áudio ativado');
-        setIsMuted(false);
+        setIsPlaying(true);
       } else {
-        // Pausar áudio
-        console.log('⏸️ Pausando áudio...');
         audio.pause();
-        audio.volume = 0;
-        console.log('✅ Áudio desativado');
-        setIsMuted(true);
+        setIsPlaying(false);
       }
-    } catch (error) {
-      console.error('❌ Erro ao alternar música:', error);
-      setIsMuted(!isMuted);
+    } catch {
+      setIsPlaying(false);
     } finally {
+      playPromiseRef.current = null;
       setIsLoading(false);
     }
   };
 
+  const controls = { isPlaying, isLoading, togglePlayback };
+
   return (
     <>
-      <audio 
-        ref={audioRef} 
-        loop 
-        preload="auto"
-        crossOrigin="anonymous"
-      >
+      <audio ref={audioRef} loop preload="auto" crossOrigin="anonymous">
         <source src="/Convite-de-Aniversario-com-Borboletas/audio/background.mp3" type="audio/mpeg" />
         <source src="https://www.bensound.com/bensound-music/bensound-littleidea.mp3" type="audio/mpeg" />
       </audio>
-      <motion.button
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ delay: 1, type: 'spring' }}
-        onClick={toggleMute}
-        disabled={isLoading}
-        className="fixed top-4 right-4 z-50 bg-white/90 backdrop-blur-sm p-3 rounded-full shadow-xl hover:bg-white hover:scale-110 transition-all active:scale-95 disabled:opacity-50"
-        aria-label={isMuted ? 'Ativar música' : 'Desativar música'}
-        title={isMuted ? 'Ativar música' : 'Desativar música'}
-      >
-        <motion.div
-          animate={{ rotate: isLoading ? 360 : 0 }}
-          transition={{ duration: 0.6, repeat: isLoading ? Infinity : 0 }}
+
+      {children ? (
+        children(controls)
+      ) : (
+        <motion.button
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: 1, type: 'spring' }}
+          onClick={togglePlayback}
+          disabled={isLoading}
+          className="fixed top-4 right-4 z-50 bg-white/95 backdrop-blur-sm p-3 rounded-full border border-[#00B8C8] shadow-xl hover:bg-[#00B8C8] hover:scale-110 transition-all active:scale-95 disabled:opacity-50"
+          aria-label={isPlaying ? 'Pausar música' : 'Ativar música'}
+          title={isPlaying ? 'Pausar música' : 'Ativar música'}
         >
-          {isMuted ? (
-            <VolumeX className="w-6 h-6 text-gray-600" />
-          ) : (
-            <Volume2 className="w-6 h-6 text-purple-600" />
-          )}
-        </motion.div>
-      </motion.button>
+          <motion.div
+            animate={{ rotate: isLoading ? 360 : 0 }}
+            transition={{ duration: 0.6, repeat: isLoading ? Infinity : 0 }}
+          >
+            {isPlaying ? (
+              <Volume2 className="w-6 h-6 text-[#C1121F]" />
+            ) : (
+              <VolumeX className="w-6 h-6 text-[#111111]" />
+            )}
+          </motion.div>
+        </motion.button>
+      )}
     </>
   );
 }

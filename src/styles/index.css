@@ -1,3 +1,60 @@
 @import './fonts.css';
 @import './tailwind.css';
 @import './theme.css';
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  scrollbar-color: #c1121f #050505;
+  scrollbar-width: thin;
+}
+
+body::-webkit-scrollbar {
+  width: 10px;
+}
+
+body::-webkit-scrollbar-track {
+  background: #050505;
+}
+
+body::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #c1121f, #00b8c8);
+  border: 2px solid #050505;
+  border-radius: 999px;
+}
+
+.fifties-atomic-bg {
+  background-color: #fff1d2;
+  background-image:
+    radial-gradient(circle at 18px 18px, #c1121f 0 3px, transparent 4px),
+    radial-gradient(circle at 54px 54px, #00a7b5 0 4px, transparent 5px),
+    linear-gradient(45deg, transparent 46%, rgba(5, 5, 5, 0.12) 47%, rgba(5, 5, 5, 0.12) 53%, transparent 54%),
+    linear-gradient(-45deg, transparent 46%, rgba(5, 5, 5, 0.08) 47%, rgba(5, 5, 5, 0.08) 53%, transparent 54%);
+  background-position:
+    0 0,
+    0 0,
+    0 0,
+    0 0;
+  background-size:
+    72px 72px,
+    72px 72px,
+    72px 72px,
+    72px 72px;
+}
+
+.fifties-atomic-bg::before {
+  background-image:
+    conic-gradient(from 0deg at 12% 24%, transparent 0 12deg, rgba(193, 18, 31, 0.68) 12deg 16deg, transparent 16deg 64deg, rgba(0, 167, 181, 0.7) 64deg 68deg, transparent 68deg 360deg),
+    conic-gradient(from 18deg at 82% 18%, transparent 0 10deg, rgba(0, 167, 181, 0.6) 10deg 14deg, transparent 14deg 70deg, rgba(5, 5, 5, 0.42) 70deg 74deg, transparent 74deg 360deg),
+    conic-gradient(from 36deg at 72% 76%, transparent 0 12deg, rgba(193, 18, 31, 0.48) 12deg 16deg, transparent 16deg 72deg, rgba(0, 167, 181, 0.52) 72deg 76deg, transparent 76deg 360deg);
+  content: "";
+  inset: 0;
+  opacity: 0.62;
+  pointer-events: none;
+  position: absolute;
+  z-index: 0;
+}
