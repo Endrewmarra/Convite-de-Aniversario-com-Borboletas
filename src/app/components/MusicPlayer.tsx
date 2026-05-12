@@ -96,7 +96,7 @@ export function MusicPlayer({ children }: MusicPlayerProps) {
   return (
     <>
       <audio ref={audioRef} loop preload="auto" crossOrigin="anonymous">
-        <source src="/Convite-de-Aniversario-com-Borboletas/audio/background.mp3" type="audio/mpeg" />
+        <source src="/convite-aniversario/audio/background.mp3" type="audio/mpeg" />
         <source src="https://www.bensound.com/bensound-music/bensound-littleidea.mp3" type="audio/mpeg" />
       </audio>
 

@@ -8,7 +8,7 @@ A configuração automática foi realizada. Agora você só precisa seguir estes
 
 1. Acesse [github.com](https://github.com)
 2. Clique em **"+"** > **"New repository"**
-3. **Nome do repositório**: `Convite-de-Aniversario-com-Borboletas`
+3. **Nome do repositório**: `convite-aniversario`
 4. **Descrição** (opcional): "Convite de Aniversário com Borboletas - React + Vite"
 5. Escolha **Public** (necessário para GitHub Pages grátis)
 6. **NÃO** inicialize com README (já temos um)
@@ -34,7 +34,7 @@ git add .
 git commit -m "Projeto inicial: Convite de Aniversário com Borboletas"
 
 # Adicione o repositório remoto (SUBSTITUA SUA_CONTA)
-git remote add origin https://github.com/SUA_CONTA/Convite-de-Aniversario-com-Borboletas.git
+git remote add origin https://github.com/SUA_CONTA/convite-aniversario.git
 
 # Renomeie a branch para 'main' (se necessário)
 git branch -M main
@@ -55,12 +55,12 @@ git push -u origin main
 
 A URL será:
 ```
-https://SUA_CONTA.github.io/Convite-de-Aniversario-com-Borboletas/
+https://SUA_CONTA.github.io/convite-aniversario/
 ```
 
 Exemplo:
 ```
-https://endrew.github.io/Convite-de-Aniversario-com-Borboletas/
+https://endrew.github.io/convite-aniversario/
 ```
 
 ## ✨ Funcionalidades que funcionarão:
@@ -91,7 +91,7 @@ https://endrew.github.io/Convite-de-Aniversario-com-Borboletas/
 
 **"Página não carrega assets?"**
 - Verifique se a base path está correta no vite.config.ts
-- Deve estar: `base: '/Convite-de-Aniversario-com-Borboletas/'`
+- Deve estar: `base: '/convite-aniversario/'`
 
 ## 📚 Atualizações futuras
 

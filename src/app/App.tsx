@@ -46,6 +46,7 @@ async function sendConfirmationEmail(guestName: string) {
 
 export default function App() {
   const eventDate = new Date('2026-07-11T16:30:00');
+  const confirmationDeadline = new Date('2026-06-20T23:59:59');
   const [timeUntil, setTimeUntil] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [nome, setNome] = useState('');
   const [confirmado, setConfirmado] = useState(false);
@@ -68,6 +69,8 @@ export default function App() {
     const interval = setInterval(calculateTime, 1000);
     return () => clearInterval(interval);
   }, []);
+
+  const isConfirmationClosed = new Date() > confirmationDeadline;
 
   const handleConfirmar = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -211,36 +214,48 @@ export default function App() {
 
         {/* Formulário de confirmação */}
         {!confirmado ? (
-          <motion.form
-            onSubmit={handleConfirmar}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.6 }}
-            className="space-y-3"
-          >
-            <div>
-              <label htmlFor="nome" className="mb-2 block text-center text-sm text-[#111111] sm:text-base">
-                Confirme sua presença
-              </label>
-              <input
-                type="text"
-                id="nome"
-                name="nome"
-                value={nome}
-                onChange={(e) => setNome(e.target.value)}
-                placeholder="Digite seu nome"
-                className="w-full rounded-xl border-2 border-[#050505] bg-[#FFFDF7] px-3 py-2 text-sm text-[#111111] placeholder:text-[#555555] transition-colors focus:border-[#B80F1D] focus:outline-none sm:px-4 sm:py-3 sm:text-base"
-                required
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full rounded-xl border-2 border-[#050505] bg-[#B80F1D] py-2 text-sm text-white shadow-[4px_4px_0_#050505] transition-all hover:-translate-y-0.5 hover:bg-[#FFFDF7] hover:text-[#B80F1D] disabled:cursor-wait disabled:opacity-70 sm:py-3 sm:text-base"
+          !isConfirmationClosed ? (
+            <motion.form
+              onSubmit={handleConfirmar}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.6 }}
+              className="space-y-3"
             >
-              {isSubmitting ? 'Enviando...' : 'Confirmar Presença'}
-            </button>
-          </motion.form>
+              <div>
+                <label htmlFor="nome" className="mb-2 block text-center font-bold text-sm text-[#111111] sm:text-base">
+                  Confirme sua presença até dia 20 de junho 
+                </label>
+                <input
+                  type="text"
+                  id="nome"
+                  name="nome"
+                  value={nome}
+                  onChange={(e) => setNome(e.target.value)}
+                  placeholder="Digite seu nome"
+                  className="w-full rounded-xl border-2 border-[#050505] bg-[#FFFDF7] px-3 py-2 text-sm text-[#111111] placeholder:text-[#555555] transition-colors focus:border-[#B80F1D] focus:outline-none sm:px-4 sm:py-3 sm:text-base"
+                  required
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full rounded-xl border-2 border-[#050505] bg-[#B80F1D] py-2 text-sm text-white shadow-[4px_4px_0_#050505] transition-all hover:-translate-y-0.5 hover:bg-[#FFFDF7] hover:text-[#B80F1D] disabled:cursor-wait disabled:opacity-70 sm:py-3 sm:text-base"
+              >
+                {isSubmitting ? 'Enviando...' : 'Confirmar Presença'}
+              </button>
+            </motion.form>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="rounded-2xl border-2 border-[#050505] bg-[#FFFDF7] p-4 text-center shadow-[4px_4px_0_#050505] sm:p-6"
+            >
+              <p className="text-base font-semibold text-[#111111]">
+                Prazo para confirmação encerrado
+              </p>
+            </motion.div>
+          )
         ) : (
           <motion.div
             initial={{ scale: 0 }}
