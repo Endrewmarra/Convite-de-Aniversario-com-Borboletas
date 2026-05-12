@@ -11,17 +11,12 @@ const eventLocation = {
   mapsUrl: 'https://maps.app.goo.gl/nyBX1DwLu9P8ztk7A',
 };
 
-const confirmationRecipientEmail = 'leydbento@gmail.com';
+const FORMSPREE_FORM_ID = 'xdabbalw';
 
 async function sendConfirmationEmail(guestName: string) {
-  if (!confirmationRecipientEmail) {
-    return { skipped: true };
-  }
-
-  const response = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(confirmationRecipientEmail)}`, {
+  const response = await fetch(`https://formspree.io/f/${FORMSPREE_FORM_ID}`, {
     method: 'POST',
     headers: {
-      Accept: 'application/json',
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
@@ -30,10 +25,6 @@ async function sendConfirmationEmail(guestName: string) {
       data: '11 e 12 de Julho de 2026',
       horario: '16:30h',
       local: eventLocation.name,
-      mensagem: `${guestName} confirmou presença no aniversário de 22 anos.`,
-      _subject: `Confirmação de presença - ${guestName}`,
-      _template: 'table',
-      _captcha: 'false',
     }),
   });
 
@@ -42,6 +33,29 @@ async function sendConfirmationEmail(guestName: string) {
   }
 
   return response.json();
+}
+
+const RATE_LIMIT_KEY = 'convite-aniversario-submission';
+const RATE_LIMIT_HOURS = 24;
+
+function checkRateLimit(): { allowed: boolean; nextAvailableTime: Date | null } {
+  const lastSubmission = localStorage.getItem(RATE_LIMIT_KEY);
+  if (!lastSubmission) return { allowed: true, nextAvailableTime: null };
+
+  const lastSubmissionTime = new Date(lastSubmission).getTime();
+  const currentTime = new Date().getTime();
+  const hoursPassed = (currentTime - lastSubmissionTime) / (1000 * 60 * 60);
+
+  if (hoursPassed < RATE_LIMIT_HOURS) {
+    const nextAvailableTime = new Date(lastSubmissionTime + RATE_LIMIT_HOURS * 60 * 60 * 1000);
+    return { allowed: false, nextAvailableTime };
+  }
+
+  return { allowed: true, nextAvailableTime: null };
+}
+
+function recordSubmission(): void {
+  localStorage.setItem(RATE_LIMIT_KEY, new Date().toISOString());
 }
 
 export default function App() {
@@ -78,17 +92,21 @@ export default function App() {
 
     if (!trimmedName || isSubmitting) return;
 
+    // Verificar rate limit
+    const { allowed } = checkRateLimit();
+    if (!allowed) {
+      toast.error('Presença já confirmada.');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
       const result = await sendConfirmationEmail(trimmedName);
+      recordSubmission(); // Registrar submissão bem-sucedida
       setConfirmado(true);
 
-      if (result.skipped) {
-        toast.info('Presença confirmada no convite. Configure o e-mail para receber confirmações automáticas.');
-      } else {
-        toast.success(`Obrigada por confirmar, ${trimmedName}! Até lá!`);
-      }
+      toast.success(`Obrigada por confirmar, ${trimmedName}! Até lá!`);
     } catch {
       toast.error('Não consegui enviar a confirmação agora. Tente novamente em instantes.');
     } finally {
